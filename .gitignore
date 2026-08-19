@@ -1,0 +1,42 @@
+*.iml
+.gradle/
+local.properties
+/.idea/
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+
+# Android Studio
+/.idea/deploymentTargetDropDown.xml
+/.idea/vcs.xml
+
+# Build outputs (root and modules)
+**/build/
+
+# Kotlin/Java
+*.class
+
+# Signing files / secrets
+*.jks
+*.keystore
+*.p12
+*.pem
+*.key
+
+# Logs and temp
+*.log
+*.tmp
+
+# OS files
+Thumbs.db
+
+# Local tools cache
+/tools/
