@@ -1,23 +1,34 @@
 package br.com.lbcifras.presentation.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.clickable
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,11 +38,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import br.com.lbcifras.domain.model.Song
 import kotlinx.coroutines.isActive
@@ -47,6 +60,7 @@ fun ReaderScreen(
     val scrollState = rememberScrollState()
     var isAutoScrollOn by remember { mutableStateOf(false) }
     var speedPxPerSecond by remember { mutableFloatStateOf(36f) }
+    var showControls by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
@@ -70,63 +84,113 @@ fun ReaderScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(text = song.title) },
-                navigationIcon = {
-                    TextButton(onClick = onBack) {
-                        Text(text = "Voltar")
-                    }
-                }
-            )
-        }
-    ) { innerPadding ->
-        Column(
+    Box(modifier = Modifier.fillMaxSize()) {
+        Text(
+            text = buildChordProAnnotated(song.chordProText),
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(horizontal = 12.dp)
+                .padding(top = 64.dp, bottom = if (showControls) 170.dp else 16.dp)
+                .verticalScroll(scrollState)
+                .clickable { showControls = !showControls },
+            fontFamily = FontFamily.Monospace,
+            style = MaterialTheme.typography.bodyLarge
+        )
+
+        Surface(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .statusBarsPadding(),
+            tonalElevation = 2.dp,
+            shadowElevation = 2.dp
         ) {
-            Text(
-                text = song.artist.ifBlank { "Artista desconhecido" },
-                style = MaterialTheme.typography.titleMedium
-            )
-            Text(text = "Tom: ${song.musicalKey}")
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { isAutoScrollOn = !isAutoScrollOn }) {
-                    Text(text = if (isAutoScrollOn) "Pausar" else "Auto-scroll")
-                }
-                Button(onClick = { speedPxPerSecond = (speedPxPerSecond - 12f).coerceAtLeast(12f) }) {
-                    Text(text = "-")
-                }
-                Button(onClick = { speedPxPerSecond = (speedPxPerSecond + 12f).coerceAtMost(240f) }) {
-                    Text(text = "+")
-                }
-                Button(onClick = { showEditDialog = true }) {
-                    Text(text = "Editar")
-                }
-                Button(onClick = { showDeleteDialog = true }) {
-                    Text(text = "Excluir")
-                }
-            }
-
-            Text(
-                text = "Velocidade: ${speedPxPerSecond.toInt()} px/s",
-                style = MaterialTheme.typography.bodySmall
-            )
-
-            Text(
-                text = buildChordProAnnotated(song.chordProText),
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
-                    .verticalScroll(scrollState),
-                fontFamily = FontFamily.Monospace,
-                style = MaterialTheme.typography.bodyLarge
-            )
+                    .height(44.dp)
+                    .padding(horizontal = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                TextButton(onClick = onBack) {
+                    Text(text = "Voltar")
+                }
+
+                Text(
+                    text = song.title,
+                    modifier = Modifier.weight(1f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.titleSmall
+                )
+
+                TextButton(onClick = { showControls = !showControls }) {
+                    Text(text = if (showControls) "Ocultar" else "Menu")
+                }
+            }
+        }
+
+        AnimatedVisibility(
+            visible = showControls,
+            modifier = Modifier.align(Alignment.BottomCenter),
+            enter = slideInVertically(initialOffsetY = { it / 2 }) + fadeIn(),
+            exit = slideOutVertically(targetOffsetY = { it / 2 }) + fadeOut()
+        ) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
+                    .navigationBarsPadding(),
+                tonalElevation = 4.dp,
+                shape = MaterialTheme.shapes.large
+            ) {
+                Column(
+                    modifier = Modifier.padding(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "${song.artist.ifBlank { "Artista desconhecido" }}  |  Tom ${song.musicalKey}",
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(onClick = { isAutoScrollOn = !isAutoScrollOn }) {
+                            Text(text = if (isAutoScrollOn) "Pausar" else "Rolar")
+                        }
+                        Button(onClick = { speedPxPerSecond = (speedPxPerSecond - 12f).coerceAtLeast(12f) }) {
+                            Text(text = "-")
+                        }
+                        Text(
+                            text = "${speedPxPerSecond.toInt()} px/s",
+                            modifier = Modifier
+                                .align(Alignment.CenterVertically)
+                                .width(84.dp),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Button(onClick = { speedPxPerSecond = (speedPxPerSecond + 12f).coerceAtMost(240f) }) {
+                            Text(text = "+")
+                        }
+                    }
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(
+                            onClick = { showEditDialog = true },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(text = "Editar")
+                        }
+                        Button(
+                            onClick = { showDeleteDialog = true },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(text = "Excluir")
+                        }
+                    }
+                }
+            }
         }
     }
 
