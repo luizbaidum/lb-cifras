@@ -40,7 +40,13 @@ class ChordLinkImporter {
         val chordPro = decoded
             .replace(Regex("\\[/?tab\\]", RegexOption.IGNORE_CASE), "")
             .replace(Regex("\\[ch](.+?)\\[/ch]", RegexOption.IGNORE_CASE), "[$1]")
-            .replace(Regex("\\r\\n|\\n"), "\n")
+            .replace("\\r\\n", "\n")
+            .replace("\\n", "\n")
+            .replace("\\r", "\n")
+            .replace("\r\n", "\n")
+            .replace("\r", "\n")
+            .replace("\\t", " ")
+            .replace("\t", " ")
             .replace(Regex("\\n{3,}"), "\n\n")
             .trim()
 
@@ -175,6 +181,11 @@ class ChordLinkImporter {
         val unescapedHtml = Parser.unescapeEntities(input, false)
         return unescapedHtml
             .replace("\\\\/", "/")
+            .replace("\\/", "/")
+            .replace("\\r\\n", "\n")
+            .replace("\\n", "\n")
+            .replace("\\r", "\n")
+            .replace("\\t", "\t")
             .replace("\\\\r", "\r")
             .replace("\\\\n", "\n")
             .replace("\\\\t", "\t")
